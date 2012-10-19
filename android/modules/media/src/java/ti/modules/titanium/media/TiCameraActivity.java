@@ -22,6 +22,12 @@ import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
 
+import org.appcelerator.kroll.KrollDict;
+import org.appcelerator.kroll.KrollFunction;
+import org.appcelerator.kroll.KrollModule;
+import org.appcelerator.kroll.KrollObject;
+import org.appcelerator.kroll.KrollRuntime;
+
 public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Callback {
 	private static final String LCAT = "TiCameraActivity";
 	private static Camera camera;
@@ -30,9 +36,13 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
 	private Uri storageUri;
 	private SurfaceView preview;
 	private FrameLayout previewLayout;
-
+	
+	public static MediaModule mediaModule = null;
 	public static TiViewProxy overlayProxy = null;
 	public static TiCameraActivity cameraActivity = null;
+	public static boolean autohide = true;
+	public static boolean skipPreview = false;
+	public static KrollFunction successCallback = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -143,9 +153,14 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
 				outputStream = new FileOutputStream(cameraActivity.storageUri.getPath());
 				outputStream.write(data);
 				outputStream.close();
-
-				cameraActivity.setResult(Activity.RESULT_OK);
-				cameraActivity.finish();
+				if(autohide) {
+					cameraActivity.setResult(Activity.RESULT_OK);
+					cameraActivity.finish();
+				} else {
+					if(successCallback != null)
+						mediaModule.invokeCallback((TiBaseActivity) cameraActivity, successCallback, mediaModule.getKrollObject(), mediaModule.createDictForImage(cameraActivity.storageUri.getPath(), "image/jpeg"));
+					if(skipPreview) camera.startPreview();
+				}
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {

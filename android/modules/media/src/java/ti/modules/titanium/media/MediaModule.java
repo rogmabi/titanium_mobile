@@ -113,11 +113,13 @@ public class MediaModule extends KrollModule
 	public MediaModule()
 	{
 		super();
+		TiCameraActivity.mediaModule = this;
 	}
 
 	public MediaModule(TiContext tiContext)
 	{
 		this();
+		TiCameraActivity.mediaModule = this;
 	}
 
 	@Kroll.method
@@ -141,6 +143,7 @@ public class MediaModule extends KrollModule
 
 		if (options.containsKey("success")) {
 			successCallback = (KrollFunction) options.get("success");
+			TiCameraActivity.successCallback = successCallback;
 		}
 		if (options.containsKey("cancel")) {
 			cancelCallback = (KrollFunction) options.get("cancel");
@@ -150,6 +153,12 @@ public class MediaModule extends KrollModule
 		}
 		if (options.containsKey("overlay")) {
 			TiCameraActivity.overlayProxy = (TiViewProxy) options.get("overlay");
+		}
+		if (options.containsKey("autohide")) {
+			TiCameraActivity.autohide = TiConvert.toBoolean(options.get("autohide"));
+		}
+		if (options.containsKey("skipPreview")) {
+			TiCameraActivity.skipPreview = TiConvert.toBoolean(options.get("skipPreview"));
 		}
 
 		if (DBG) {
@@ -265,6 +274,13 @@ public class MediaModule extends KrollModule
 		resultHandler.cameraIntent = cameraIntent.getIntent();
 		activity.runOnUiThread(resultHandler);
 	}
+	
+	@Kroll.method
+	public void hideCamera()
+	{
+		TiCameraActivity.cameraActivity.setResult(Activity.RESULT_CANCELED);
+		TiCameraActivity.cameraActivity.finish();
+	}
 
 	/**
 	 * Object that is used to wrap required fields for async processing when invoking 
@@ -304,7 +320,7 @@ public class MediaModule extends KrollModule
 		return super.handleMessage(message);
 	}
 
-	private void invokeCallback(TiBaseActivity callbackActivity, KrollFunction callback, KrollObject krollObject, KrollDict callbackArgs)
+	public void invokeCallback(TiBaseActivity callbackActivity, KrollFunction callback, KrollObject krollObject, KrollDict callbackArgs)
 	{
 		if (KrollRuntime.getInstance().isRuntimeThread()) {
 			doInvokeCallback(callbackActivity, callback, krollObject, callbackArgs);
@@ -611,7 +627,7 @@ public class MediaModule extends KrollModule
 			});
 	}
 
-	KrollDict createDictForImage(String path, String mimeType) {
+	public KrollDict createDictForImage(String path, String mimeType) {
 		KrollDict d = new KrollDict();
 
 		int width = -1;

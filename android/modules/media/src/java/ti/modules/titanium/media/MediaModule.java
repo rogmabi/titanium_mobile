@@ -65,6 +65,7 @@ import android.view.Window;
 public class MediaModule extends KrollModule
 	implements Handler.Callback
 {
+	public static CameraResultHandler resultHandler = null;
 	private static final String LCAT = "TiMedia";
 	private static final boolean DBG = TiConfig.LOGD;
 
@@ -263,7 +264,7 @@ public class MediaModule extends KrollModule
 			cameraIntent.getIntent().putExtra(MediaStore.EXTRA_OUTPUT, Uri.parse(imageUrl));
 		}
 
-		CameraResultHandler resultHandler = new CameraResultHandler();
+		resultHandler = new CameraResultHandler();
 		resultHandler.imageFile = imageFile;
 		resultHandler.imageUrl = imageUrl;
 		resultHandler.saveToPhotoGallery = saveToPhotoGallery;
@@ -365,13 +366,15 @@ public class MediaModule extends KrollModule
 		public void onResult(Activity activity, int requestCode, int resultCode, Intent data)
 		{
 			if (resultCode == Activity.RESULT_CANCELED) {
-				if (imageFile != null) {
-					imageFile.delete();
+				// Titanium must not delete files if you are just using back button (which is neccesary if having autohide off)
+				if (TiCameraActivity.autohide) {
+					if (imageFile != null) {
+						imageFile.delete();
+					}
 				}
 				if (cancelCallback != null) {
 					cancelCallback.callAsync(getKrollObject(), new Object[] {});
 				}
-
 			} else {
 				if (data == null) {
 					ContentValues values = new ContentValues(7);
@@ -382,7 +385,6 @@ public class MediaModule extends KrollModule
 					if (saveToPhotoGallery) {
 						values.put(Images.ImageColumns.BUCKET_ID, PHOTO_DCIM_CAMERA.toLowerCase().hashCode());
 						values.put(Images.ImageColumns.BUCKET_DISPLAY_NAME, "Camera");
-
 					} else {
 						values.put(Images.ImageColumns.BUCKET_ID, imageFile.getPath().toLowerCase().hashCode());
 						values.put(Images.ImageColumns.BUCKET_DISPLAY_NAME, imageFile.getName());

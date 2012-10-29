@@ -134,6 +134,50 @@ public class MediaModule extends KrollModule
 			vibrator.vibrate(pattern, -1);
 		}
 	}
+	
+	private File tempImageFile(boolean saveToPhotoGallery, boolean skipPreview, KrollFunction errorCallback) {
+		Activity activity = TiApplication.getInstance().getCurrentActivity();
+		TiActivitySupport activitySupport = (TiActivitySupport) activity;
+		TiFileHelper tfh = TiFileHelper.getInstance();
+		
+		File imageDir = null;
+		File imageFile = null;
+		
+		try {
+			if (saveToPhotoGallery) {
+				imageDir = new File(PHOTO_DCIM_CAMERA);
+				if (!imageDir.exists()) {
+					imageDir.mkdirs();
+				}
+
+			} else {
+				if (activity.getIntent() != null) {
+					String name = TiApplication.getInstance().getAppInfo().getName();
+					imageDir = new File(PHOTO_DCIM_CAMERA, name);
+					if (!imageDir.exists()) {
+						imageDir.mkdirs();
+						if (!imageDir.exists()) {
+							Log.w(LCAT, "Attempt to create '" + imageDir.getAbsolutePath() +  "' failed silently.");
+						}
+					}
+
+				} else {
+					imageDir = tfh.getDataDirectory(false);
+				}
+			}
+
+			imageFile = tfh.getTempFile(imageDir, ".jpg");
+			return imageFile;
+
+		} catch (IOException e) {
+			Log.e(LCAT, "Unable to create temp file", e);
+			if (errorCallback != null) {
+				errorCallback.callAsync(getKrollObject(), createErrorResponse(UNKNOWN_ERROR, e.getMessage()));
+			}
+
+			return null;
+		}
+	}
 
 	@Kroll.method
 	public void showCamera(HashMap options)
@@ -256,7 +300,7 @@ public class MediaModule extends KrollModule
 					break;
 				}
 			} catch (NullPointerException e) {
-				//Ignore
+				// Ignore
 			}
 		}
 
@@ -396,12 +440,16 @@ public class MediaModule extends KrollModule
 					// puts newly captured photo into the gallery
 					MediaScannerClient mediaScanner = new MediaScannerClient(activity, new String[] {imageUrl}, null, null);
 					mediaScanner.scan();
-
 					try {
 						if (successCallback != null) {
 							invokeCallback((TiBaseActivity) activity, successCallback, getKrollObject(), createDictForImage(imageUri.toString(), "image/jpeg"));
+							if(TiCameraActivity.skipPreview) {
+								//Different file for after taking a picture for saving in the gallery
+								//Fix it later
+								//this.imageFile = tempImageFile(saveToPhotoGallery, TiCameraActivity.skipPreview, errorCallback);
+								//this.imageUrl = "file://" + imageFile.getAbsolutePath();
+							}
 						}
-
 					} catch (OutOfMemoryError e) {
 						String msg = "Not enough memory to get image: " + e.getMessage();
 						Log.e(LCAT, msg);
@@ -409,7 +457,6 @@ public class MediaModule extends KrollModule
 							invokeCallback((TiBaseActivity) activity, errorCallback, getKrollObject(), createErrorResponse(UNKNOWN_ERROR, msg));
 						}
 					}
-
 				} else {
 					// Get the content information about the saved image
 					String[] projection = {

@@ -39,6 +39,7 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.graphics.ImageFormat;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.AccelerateInterpolator;
@@ -254,6 +255,7 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
 
     static public void takePicture() {
         Log.i(LCAT, "Taking picture");
+        if(shutterLock) return; // do NOT make a picture when still decoding a previous picture.
         if(!autohide && TiCameraActivity.currentImageData != null) {
 			shutterLock = true;
 			Handler refresh = new Handler(Looper.getMainLooper());
@@ -273,14 +275,20 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
 							image.compressToJpeg(rect, 100, out);
 							byte[] imageData = out.toByteArray();
 							Bitmap imageBitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+							imageData = null;
 							if(imageBitmap == null) {
 								Log.i(LCAT, "PreviewFix failed :(");
 							} else {
+								if (((BitmapDrawable) previewFix.getDrawable()) != null)
+									((BitmapDrawable) previewFix.getDrawable()).getBitmap().recycle();
 								previewFix.setImageBitmap(imageBitmap);
+								imageBitmap = null;
 							}					
 							previewFix.setVisibility(View.VISIBLE);
+							image = null;
 						}
 						data = null;
+						System.gc();
 					}
 				}
 			});

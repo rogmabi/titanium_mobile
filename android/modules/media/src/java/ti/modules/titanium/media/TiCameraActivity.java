@@ -61,7 +61,7 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
     private TiViewProxy localOverlayProxy = null;
     private Uri storageUri;
     private SurfaceView preview;
-    private static ImageView previewFix; // Yamm preview workaroundo
+    private static ImageView previewFix; // Yamm preview workaround
     private static FrameLayout previewLayout;
     private static MediaPlayer _shootMP;
     private static boolean savingPictureLock = false; 
@@ -71,8 +71,40 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
     public static boolean autohide = true;
     public static boolean skipPreview = false;
     public static KrollFunction successCallback = null;
+    private static int cameraFlashMode = 0;
     private static Context context;
     private static byte[] currentImageData = null;
+    
+    public static int getCameraFlashMode()
+	{
+		return cameraFlashMode;
+	}
+
+	public static void setCameraFlashMode(int mode)
+	{
+		TiCameraActivity.cameraFlashMode = mode;
+		List<String> mSupportedFlashModes = camera.getParameters().getSupportedFlashModes();
+		if(mode == MediaModule.CAMERA_FLASH_ON) {
+			if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_ON))
+			{
+				Camera.Parameters parameters = camera.getParameters();
+				parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+				camera.setParameters(parameters);
+				Log.i(LCAT, "Flash is ON");
+			} else {
+				Log.i(LCAT, "Flash not supported :(");
+			}
+		} else {
+			if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_OFF))
+			{
+				Camera.Parameters parameters = camera.getParameters();
+				parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);             
+				camera.setParameters(parameters);
+				Log.i(LCAT, "Flash is OFF");
+			}
+		}
+		mSupportedFlashModes = null;
+	}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -153,6 +185,7 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
     public void surfaceCreated(SurfaceHolder previewHolder) {
         camera = Camera.open();
         camera.setPreviewCallback(previewCallback);
+        setCameraFlashMode(MediaModule.CAMERA_FLASH_OFF);
         /*
          * Disabling this since it can end up picking a bad preview size which
          * can create stretching issues (TIMOB-8151). Original words of wisdom

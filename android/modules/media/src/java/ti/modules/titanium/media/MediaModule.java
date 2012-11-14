@@ -107,6 +107,9 @@ public class MediaModule extends KrollModule
 	@Kroll.constant public static final int VIDEO_FINISH_REASON_PLAYBACK_ENDED = 0;
 	@Kroll.constant public static final int VIDEO_FINISH_REASON_PLAYBACK_ERROR = 1;
 	@Kroll.constant public static final int VIDEO_FINISH_REASON_USER_EXITED = 2;
+	
+	@Kroll.constant public static final int CAMERA_FLASH_OFF = 0;
+	@Kroll.constant public static final int CAMERA_FLASH_ON = 1;
 
 	@Kroll.constant public static final String MEDIA_TYPE_PHOTO = "public.image";
 	@Kroll.constant public static final String MEDIA_TYPE_VIDEO = "public.video";
@@ -121,6 +124,18 @@ public class MediaModule extends KrollModule
 	{
 		this();
 		TiCameraActivity.mediaModule = this;
+	}
+	
+	@Kroll.getProperty @Kroll.method
+	public int getCameraFlashMode()
+	{
+		return TiCameraActivity.getCameraFlashMode();
+	}
+
+	@Kroll.setProperty @Kroll.method
+	public void setCameraFlashMode(int mode)
+	{
+		TiCameraActivity.setCameraFlashMode(mode);
 	}
 
 	@Kroll.method

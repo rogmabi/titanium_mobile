@@ -84,26 +84,28 @@ public class TiCameraActivity extends TiBaseActivity implements SurfaceHolder.Ca
 	{
 		TiCameraActivity.cameraFlashMode = mode;
 		List<String> mSupportedFlashModes = camera.getParameters().getSupportedFlashModes();
-		if(mode == MediaModule.CAMERA_FLASH_ON) {
-			if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_ON))
-			{
-				Camera.Parameters parameters = camera.getParameters();
-				parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
-				camera.setParameters(parameters);
-				Log.i(LCAT, "Flash is ON");
+		if(mSupportedFlashModes != null) {
+			if(mode == MediaModule.CAMERA_FLASH_ON) {
+				if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_ON))
+				{
+					Camera.Parameters parameters = camera.getParameters();
+					parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+					camera.setParameters(parameters);
+					Log.i(LCAT, "Flash is ON");
+				} else {
+					Log.i(LCAT, "Flash not supported :(");
+				}
 			} else {
-				Log.i(LCAT, "Flash not supported :(");
+				if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_OFF))
+				{
+					Camera.Parameters parameters = camera.getParameters();
+					parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);             
+					camera.setParameters(parameters);
+					Log.i(LCAT, "Flash is OFF");
+				}
 			}
-		} else {
-			if (mSupportedFlashModes.contains(Camera.Parameters.FLASH_MODE_OFF))
-			{
-				Camera.Parameters parameters = camera.getParameters();
-				parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);             
-				camera.setParameters(parameters);
-				Log.i(LCAT, "Flash is OFF");
-			}
+			mSupportedFlashModes = null;
 		}
-		mSupportedFlashModes = null;
 	}
 
     @Override
